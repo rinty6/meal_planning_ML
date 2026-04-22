@@ -1,0 +1,25 @@
+# Keep local secrets and runtime artifacts out of commits.
+.env
+node_modules/
+venv/
+__pycache__/
+*.pyc
+
+# Keep local test and debug artifacts out of commits.
+.pytest_cache/
+tmp_*.json
+tmp_*.log
+
+# Keep large local datasets and generated benchmark outputs out of commits.
+dataset_process/off.db
+dataset_process/food.parquet
+dataset_process/AUSNUT_dataset.csv
+dataset_process/*.csv
+dataset_process/*.txt
+dataset_process/ausnut_benchmark/*
+!dataset_process/ausnut_benchmark/latest_ausnut_summary.json
+dataset_process/ausnut_benchmark_*/
+dataset_process/beverage_eligibility_audit/
+dataset_process/dinner_side_eligibility_audit/
+tests/
+tmp_image_check.py

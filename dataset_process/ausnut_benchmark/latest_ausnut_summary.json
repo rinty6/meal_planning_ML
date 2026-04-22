@@ -1,0 +1,283 @@
+{
+  "acceptance_thresholds": {
+    "max_macro_vector_distance": 0.2,
+    "max_mean_relative_error": 0.45,
+    "min_title_overlap": 0.125,
+    "minimum_relevance_grade": 2.0,
+    "require_category_or_major_group_match": true
+  },
+  "baseline_comparison": {
+    "category_constrained": {
+      "coverage_at_5": 0.4236,
+      "hit_rate_at_5": 0.9906,
+      "macro_vector_distance": 0.1186,
+      "mean_relative_error": 0.5148,
+      "ndcg_at_10": 0.9407,
+      "primary_records": 635,
+      "recipe_category_accuracy": 0.0094,
+      "records": 748
+    },
+    "current_off_only": {
+      "coverage_at_5": 0.3244,
+      "hit_rate_at_5": 1.0,
+      "macro_vector_distance": 0.1049,
+      "mean_relative_error": 0.443,
+      "ndcg_at_10": 0.8907,
+      "primary_records": 635,
+      "recipe_category_accuracy": 0.0441,
+      "records": 748
+    },
+    "nutrient_nn": {
+      "coverage_at_5": 0.1291,
+      "hit_rate_at_5": 0.8913,
+      "macro_vector_distance": 0.1248,
+      "mean_relative_error": 0.4566,
+      "ndcg_at_10": 0.7774,
+      "primary_records": 635,
+      "recipe_category_accuracy": 0.0031,
+      "records": 748
+    }
+  },
+  "benchmark_version": "ausnut-benchmark-2026-03-19-c3236a45b3",
+  "best_holdout_baseline": "category_constrained",
+  "external_benchmark": "AUSNUT",
+  "generated_at": "2026-03-26T13:16:56.978730+00:00",
+  "holdout_split": "test",
+  "paths": {
+    "baseline_report": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\baseline_report.md",
+    "benchmark_specification": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\benchmark_specification.md",
+    "benchmark_table": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\ausnut_benchmark_table.csv",
+    "category_constrained_test_report": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\category_constrained_test_report.json",
+    "category_constrained_test_results": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\category_constrained_test_results.csv",
+    "current_off_only_dev_alias_candidates": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\current_off_only_dev_alias_candidates.csv",
+    "current_off_only_dev_alias_review_queue": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\current_off_only_dev_alias_review_queue.csv",
+    "current_off_only_dev_promoteable_aliases": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\current_off_only_dev_promoteable_aliases.csv",
+    "current_off_only_dev_report": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\current_off_only_dev_report.json",
+    "current_off_only_dev_results": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\current_off_only_dev_results.csv",
+    "current_off_only_test_report": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\current_off_only_test_report.json",
+    "current_off_only_test_results": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\current_off_only_test_results.csv",
+    "gap_analysis_report": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\gap_analysis_report.md",
+    "latest_summary": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\latest_ausnut_summary.json",
+    "metric_definition_sheet": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\metric_definition_sheet.md",
+    "nutrient_nn_test_report": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\nutrient_nn_test_report.json",
+    "nutrient_nn_test_results": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\nutrient_nn_test_results.csv",
+    "split_manifest": "C:\\Users\\kanep\\Downloads\\meal_planning_app\\machine_learning\\dataset_process\\ausnut_benchmark\\ausnut_split_manifest.json"
+  },
+  "policy_version": "2026-03-19",
+  "report_template_version": "ausnut-benchmark-v1",
+  "selected_tuning": {
+    "candidate_pool_trials": [
+      {
+        "candidate_pool_size": 80,
+        "overall_primary": {
+          "category_agreement": {
+            "major_food_group_accuracy": 0.405,
+            "meal_slot_accuracy": 0.9083,
+            "recipe_category_accuracy": 0.0533
+          },
+          "coverage": {
+            "acceptable_at_k": {
+              "1": 0.1733,
+              "10": 0.3067,
+              "3": 0.24,
+              "5": 0.27
+            },
+            "candidate_return_rate": 1.0
+          },
+          "failure_modes": {
+            "candidate_quality": 31,
+            "category_assignment": 130,
+            "ranking_order": 58,
+            "title_normalization": 181,
+            "title_or_category_gate": 200
+          },
+          "macro_vector_distance": {
+            "mean_cosine_distance": 0.0043,
+            "mean_normalized_l2_distance": 0.1096,
+            "median_normalized_l2_distance": 0.094
+          },
+          "nutrient_profile_error": {
+            "comparison_basis": "per100",
+            "field_relative_error": {
+              "calories": 0.0671,
+              "carbs": 0.6807,
+              "fats": 0.695,
+              "protein": 0.3015,
+              "sugar": 0.4789
+            },
+            "mean_relative_error": 0.4446,
+            "median_relative_error": 0.3931
+          },
+          "record_count": 600,
+          "retrieval_metrics": {
+            "hit_rate_at_k": {
+              "1": 0.9833,
+              "10": 1.0,
+              "3": 0.9967,
+              "5": 1.0
+            },
+            "ndcg_at_k": {
+              "1": 0.8583,
+              "10": 0.8929,
+              "3": 0.8664,
+              "5": 0.8809
+            },
+            "recall_at_k": {
+              "1": 0.0247,
+              "10": 0.2204,
+              "3": 0.0705,
+              "5": 0.1154
+            }
+          },
+          "title_alignment": {
+            "mean_token_overlap": 0.0833,
+            "median_token_overlap": 0.0
+          }
+        },
+        "score": 0.651845
+      },
+      {
+        "candidate_pool_size": 60,
+        "overall_primary": {
+          "category_agreement": {
+            "major_food_group_accuracy": 0.4033,
+            "meal_slot_accuracy": 0.9017,
+            "recipe_category_accuracy": 0.0433
+          },
+          "coverage": {
+            "acceptable_at_k": {
+              "1": 0.1733,
+              "10": 0.2983,
+              "3": 0.2367,
+              "5": 0.2617
+            },
+            "candidate_return_rate": 1.0
+          },
+          "failure_modes": {
+            "candidate_quality": 31,
+            "category_assignment": 131,
+            "ranking_order": 53,
+            "title_normalization": 181,
+            "title_or_category_gate": 204
+          },
+          "macro_vector_distance": {
+            "mean_cosine_distance": 0.0042,
+            "mean_normalized_l2_distance": 0.1073,
+            "median_normalized_l2_distance": 0.0917
+          },
+          "nutrient_profile_error": {
+            "comparison_basis": "per100",
+            "field_relative_error": {
+              "calories": 0.065,
+              "carbs": 0.6943,
+              "fats": 0.697,
+              "protein": 0.299,
+              "sugar": 0.4928
+            },
+            "mean_relative_error": 0.4496,
+            "median_relative_error": 0.395
+          },
+          "record_count": 600,
+          "retrieval_metrics": {
+            "hit_rate_at_k": {
+              "1": 0.9817,
+              "10": 1.0,
+              "3": 0.9967,
+              "5": 1.0
+            },
+            "ndcg_at_k": {
+              "1": 0.8628,
+              "10": 0.8983,
+              "3": 0.8744,
+              "5": 0.8856
+            },
+            "recall_at_k": {
+              "1": 0.0315,
+              "10": 0.2772,
+              "3": 0.0894,
+              "5": 0.1483
+            }
+          },
+          "title_alignment": {
+            "mean_token_overlap": 0.082,
+            "median_token_overlap": 0.0
+          }
+        },
+        "score": 0.65087
+      },
+      {
+        "candidate_pool_size": 100,
+        "overall_primary": {
+          "category_agreement": {
+            "major_food_group_accuracy": 0.41,
+            "meal_slot_accuracy": 0.91,
+            "recipe_category_accuracy": 0.0617
+          },
+          "coverage": {
+            "acceptable_at_k": {
+              "1": 0.18,
+              "10": 0.3083,
+              "3": 0.25,
+              "5": 0.275
+            },
+            "candidate_return_rate": 1.0
+          },
+          "failure_modes": {
+            "candidate_quality": 31,
+            "category_assignment": 124,
+            "ranking_order": 57,
+            "title_normalization": 182,
+            "title_or_category_gate": 206
+          },
+          "macro_vector_distance": {
+            "mean_cosine_distance": 0.0045,
+            "mean_normalized_l2_distance": 0.1106,
+            "median_normalized_l2_distance": 0.0953
+          },
+          "nutrient_profile_error": {
+            "comparison_basis": "per100",
+            "field_relative_error": {
+              "calories": 0.0668,
+              "carbs": 0.69,
+              "fats": 0.6934,
+              "protein": 0.3042,
+              "sugar": 0.4661
+            },
+            "mean_relative_error": 0.4441,
+            "median_relative_error": 0.3939
+          },
+          "record_count": 600,
+          "retrieval_metrics": {
+            "hit_rate_at_k": {
+              "1": 0.9833,
+              "10": 1.0,
+              "3": 0.9967,
+              "5": 1.0
+            },
+            "ndcg_at_k": {
+              "1": 0.8507,
+              "10": 0.8828,
+              "3": 0.86,
+              "5": 0.8704
+            },
+            "recall_at_k": {
+              "1": 0.02,
+              "10": 0.1823,
+              "3": 0.0567,
+              "5": 0.0941
+            }
+          },
+          "title_alignment": {
+            "mean_token_overlap": 0.0845,
+            "median_token_overlap": 0.0
+          }
+        },
+        "score": 0.6491
+      }
+    ],
+    "selected_candidate_pool_size": 80,
+    "tuning_sample_size": 600
+  },
+  "status": "available",
+  "training_and_retrieval_corpus": "Open Food Facts (OFF)"
+}
