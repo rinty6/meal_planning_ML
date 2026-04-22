@@ -7,3 +7,4 @@ numpy
 pyarrow
 faiss-cpu
 duckdb
+sqlalchemy
