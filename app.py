@@ -58,6 +58,7 @@ def recommend():
 
 if __name__ == "__main__":
     debug_flag = str(os.getenv("FLASK_DEBUG", "0")).strip().lower() in {"1", "true", "yes", "on"}
+    host = str(os.getenv("HOST", "0.0.0.0")).strip() or "0.0.0.0"
     port = int(str(os.getenv("PORT", "5001")).strip() or "5001")
     # Disable debug reloader by default to avoid duplicate workers and duplicate background mapping jobs.
-    app.run(port=port, debug=debug_flag)
+    app.run(host=host, port=port, debug=debug_flag)
