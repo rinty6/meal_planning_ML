@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated_at": "2026-04-22T04:03:58.587131+00:00",
+  "updated_at": "2026-04-25T03:44:22.190970+00:00",
   "mappings": {
     "0804879524984": {
       "recipe_id": "0804879524984",
@@ -60472,6 +60472,76 @@
       "serving_calorie_diff_ratio": 0.906095,
       "acceptance_mode": "strict",
       "mapped_at": "2026-04-22T04:03:58.587033+00:00"
+    },
+    "3334536561642": {
+      "recipe_id": "3334536561642",
+      "dataset_title": "Carrabba's Italian Grill, Chicken Parmesan, Family Bundle",
+      "food_id": "104059914",
+      "food_name": "Grilled Chicken Bundle Sandwich",
+      "image": null,
+      "food_type": "Brand",
+      "food_url": "https://foods.fatsecret.com/calories-nutrition/chick-fil-a/grilled-chicken-bundle-sandwich",
+      "brand_name": "Chick-Fil-A",
+      "per100": {
+        "calories": 196.581,
+        "protein": 17.521,
+        "carbs": 13.675,
+        "fats": 7.692
+      },
+      "serving_id": "82720861",
+      "serving_description": "1 serving",
+      "metric_serving_amount": "234.000",
+      "metric_serving_unit": "g",
+      "number_of_units": "1.000",
+      "measurement_description": "serving",
+      "serving_calories": 460.0,
+      "serving_protein": 41.0,
+      "serving_carbs": 32.0,
+      "serving_fats": 18.0,
+      "allergens": [],
+      "preferences": [],
+      "food_sub_categories": [],
+      "mapped_query": "Chicken Parmesan, Family Bundle",
+      "title_similarity": 0.5,
+      "calorie_diff_ratio": 0.6205,
+      "serving_calorie_diff_ratio": 0.111969,
+      "acceptance_mode": "relaxed_title_fallback",
+      "mapped_at": "2026-04-25T02:25:53.376403+00:00"
+    },
+    "5400101001862": {
+      "recipe_id": "5400101001862",
+      "dataset_title": "Soja drink",
+      "food_id": "7656",
+      "food_name": "Energy Drink",
+      "image": null,
+      "food_type": "Generic",
+      "food_url": "https://foods.fatsecret.com/calories-nutrition/generic/energy-drink",
+      "brand_name": null,
+      "per100": {
+        "calories": 45.0,
+        "protein": 0.25,
+        "carbs": 10.942,
+        "fats": 0.079
+      },
+      "serving_id": "28090",
+      "serving_description": "1 cup (8 fl oz)",
+      "metric_serving_amount": "240.000",
+      "metric_serving_unit": "g",
+      "number_of_units": "1.000",
+      "measurement_description": "cup (8 fl oz)",
+      "serving_calories": 108.0,
+      "serving_protein": 0.6,
+      "serving_carbs": 26.26,
+      "serving_fats": 0.19,
+      "allergens": [],
+      "preferences": [],
+      "food_sub_categories": [],
+      "mapped_query": "Soja drink",
+      "title_similarity": 0.333333,
+      "calorie_diff_ratio": 0.008969,
+      "serving_calorie_diff_ratio": 0.210762,
+      "acceptance_mode": "strict",
+      "mapped_at": "2026-04-25T03:44:22.190829+00:00"
     }
   }
 }

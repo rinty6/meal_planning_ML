@@ -1168,11 +1168,18 @@ def _drink_semantics_cached(
 
     has_strong_beverage_keyword = _matches_any_keyword(title_text, _STRONG_BEVERAGE_KEYWORDS)
     has_weak_beverage_keyword = _has_explicit_weak_beverage_title(title_text, title_tokens)
-    has_beverage_keyword = has_strong_beverage_keyword or has_weak_beverage_keyword
+    # Treat explicit generic drink labels as beverage markers for role classification.
+    has_explicit_generic_beverage_title = any(re.search(rf"\b{term}\b", title_text) for term in ("drink", "beverage"))
+    has_beverage_keyword = has_strong_beverage_keyword or has_weak_beverage_keyword or has_explicit_generic_beverage_title
     has_taxonomy_beverage_keyword = _matches_any_keyword(taxonomy_text, COMBO_BEVERAGE_KEYWORDS)
     has_side_keyword = _matches_any_keyword(text, COMBO_SIDE_KEYWORDS)
     has_shake_title = "shake" in title_tokens and "smoothie" not in title_tokens
-    has_plain_milk_title = "milk" in title_tokens and not bool(title_tokens.intersection(_NON_DRINK_ROLE_MARKERS))
+    # Keep explicit milk drinks in the drink role instead of demoting them into breakfast sides.
+    has_plain_milk_title = (
+        "milk" in title_tokens
+        and not has_beverage_keyword
+        and not bool(title_tokens.intersection(_NON_DRINK_ROLE_MARKERS))
+    )
     has_non_drink_beverage_title = any(
         re.search(pattern, title_text) for pattern in _NON_DRINK_BEVERAGE_TITLE_PATTERNS
     ) and "juice only" not in title_text
