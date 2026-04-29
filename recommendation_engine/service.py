@@ -12,6 +12,11 @@ from typing import Any
 
 import numpy as np
 
+try:
+    import psutil
+except ImportError:
+    psutil = None
+
 from .constants import (
     ASYNC_MAPPING_MISS_BACKOFF_SECONDS,
     ASYNC_MAPPING_MISS_MAX_RETRIES,
@@ -261,6 +266,7 @@ class RecommendationService:
         consumed_image_use_detail_lookup: bool = CONSUMED_IMAGE_USE_DETAIL_LOOKUP,
         parallel_slot_execution_enabled: bool = False,
         parallel_primary_role_retrieval_enabled: bool = True,
+        primary_retrieval_max_workers: int | None = None,
     ):
         self.fs_client = fs_client
         self.local_dataset = local_dataset
@@ -294,6 +300,17 @@ class RecommendationService:
         self.consumed_image_use_detail_lookup = bool(consumed_image_use_detail_lookup)
         self.parallel_slot_execution_enabled = bool(parallel_slot_execution_enabled)
         self.parallel_primary_role_retrieval_enabled = bool(parallel_primary_role_retrieval_enabled)
+        # NOTE: Keep the historical 9-search default but allow env-driven caps for focused latency experiments.
+        default_primary_retrieval_max_workers = max(3, len(MEAL_SLOTS) * 3)
+        configured_primary_retrieval_max_workers = (
+            default_primary_retrieval_max_workers
+            if primary_retrieval_max_workers is None
+            else int(primary_retrieval_max_workers)
+        )
+        self._primary_retrieval_max_workers = max(
+            3,
+            min(len(MEAL_SLOTS) * 3, configured_primary_retrieval_max_workers),
+        )
         self.has_fatsecret_credentials = bool(
             str(getattr(self.fs_client, "client_id", "")).strip()
             and str(getattr(self.fs_client, "client_secret", "")).strip()
@@ -333,7 +350,6 @@ class RecommendationService:
         self._async_workers: list[Thread] = []
         self._async_workers_started = False
         self._slot_build_max_workers = max(1, len(MEAL_SLOTS))
-        self._primary_retrieval_max_workers = max(3, len(MEAL_SLOTS) * 3)
         self._slot_build_executor = ThreadPoolExecutor(
             max_workers=self._slot_build_max_workers,
             thread_name_prefix="slot-build",
@@ -358,9 +374,87 @@ class RecommendationService:
             f"slot_image_lookups={self.slot_consumed_image_lookups}",
             f"parallel_slots={int(self.parallel_slot_execution_enabled)}",
             f"parallel_primary_roles={int(self.parallel_primary_role_retrieval_enabled)}",
+            f"primary_retrieval_workers={self._primary_retrieval_max_workers}",
         )
         # NOTE: Start async mapping workers during initialization.
         self._ensure_async_workers_started()
+
+    def get_runtime_metrics(self) -> dict[str, Any]:
+        async_queue = self._async_queue
+        async_queue_size = None
+        async_queue_remaining = None
+        if async_queue is not None:
+            try:
+                async_queue_size = int(async_queue.qsize())
+                async_queue_remaining = max(0, int(async_queue.maxsize) - async_queue_size)
+            except NotImplementedError:
+                async_queue_size = None
+                async_queue_remaining = None
+
+        with self._response_cache_lock:
+            response_cache_entries = len(self.response_cache)
+        with self._response_build_lock:
+            response_build_inflight = len(self._response_build_events)
+        with self._prime_response_warmup_lock:
+            prime_warmup_inflight = len(self._prime_response_warmup_inflight)
+        with self._mapping_title_lookup_cache_lock:
+            mapping_title_lookup_cache_entries = len(self._mapping_title_lookup_cache)
+        with self._async_inflight_lock:
+            async_inflight_recipe_count = len(self._async_inflight_recipe_ids)
+        with self._async_miss_lock:
+            async_miss_state_count = len(self._async_miss_state)
+
+        process_metrics: dict[str, Any] = {
+            "psutil_available": psutil is not None,
+            "pid": os.getpid(),
+            "rss_mb": None,
+            "vms_mb": None,
+            "cpu_user_seconds": None,
+            "cpu_system_seconds": None,
+            "thread_count": None,
+        }
+        if psutil is not None:
+            # NOTE: Capture live process memory and cumulative CPU time for Phase 10 runtime telemetry.
+            process = psutil.Process(os.getpid())
+            memory_info = process.memory_info()
+            cpu_times = process.cpu_times()
+            process_metrics.update(
+                {
+                    "rss_mb": round(float(memory_info.rss) / (1024 * 1024), 2),
+                    "vms_mb": round(float(memory_info.vms) / (1024 * 1024), 2),
+                    "cpu_user_seconds": round(float(getattr(cpu_times, "user", 0.0)), 3),
+                    "cpu_system_seconds": round(float(getattr(cpu_times, "system", 0.0)), 3),
+                    "thread_count": int(process.num_threads()),
+                }
+            )
+
+        return {
+            "generated_at": datetime.now(timezone.utc).isoformat(),
+            "process": process_metrics,
+            "runtime": {
+                "response_cache_enabled": self.response_cache_seconds > 0,
+                "response_cache_entries": response_cache_entries,
+                "response_build_inflight": response_build_inflight,
+                "history_cache_entries": len(self._history_cache),
+                "goal_cache_entries": len(self._goal_cache),
+                "profile_cache_entries": len(self._profile_cache),
+                "mapping_title_lookup_cache_entries": mapping_title_lookup_cache_entries,
+                "prime_warmup_inflight": prime_warmup_inflight,
+                "async_mapping_enabled": self.async_mapping_enabled,
+                "async_queue_enabled": async_queue is not None,
+                "async_queue_size": async_queue_size,
+                "async_queue_capacity": int(async_queue.maxsize) if async_queue is not None else None,
+                "async_queue_remaining": async_queue_remaining,
+                "async_inflight_recipe_count": async_inflight_recipe_count,
+                "async_miss_state_count": async_miss_state_count,
+                "async_worker_count_configured": self.async_mapping_worker_count,
+                "async_worker_threads_started": len(self._async_workers),
+                "async_worker_threads_alive": sum(1 for worker in self._async_workers if worker.is_alive()),
+                "parallel_slot_execution_enabled": self.parallel_slot_execution_enabled,
+                "parallel_primary_role_retrieval_enabled": self.parallel_primary_role_retrieval_enabled,
+                "primary_retrieval_max_workers": self._primary_retrieval_max_workers,
+            },
+        }
 
     def warm_parallel_search_runtime(self) -> None:
         if not self.local_dataset.is_ready:
@@ -514,8 +608,10 @@ class RecommendationService:
             for plan in search_plans
         ]
         seen_workers: set[str] = set()
+        # NOTE: Release once each available primary-search worker has entered the warm path; waiting for all 9 plans stalls capped executors behind the barrier.
+        target_started_workers = max(1, min(len(search_plans), self._primary_retrieval_max_workers))
         deadline = time.perf_counter() + 8.0
-        while len(seen_workers) < len(search_plans):
+        while len(seen_workers) < target_started_workers:
             remaining = deadline - time.perf_counter()
             if remaining <= 0:
                 break
@@ -630,6 +726,12 @@ class RecommendationService:
             os.getenv("PARALLEL_PRIMARY_ROLE_RETRIEVAL_ENABLED", "1"),
             True,
         )
+        # NOTE: Allow runtime tuning of the dedicated primary-search worker cap without changing search semantics.
+        raw_primary_retrieval_max_workers = os.getenv("PRIMARY_RETRIEVAL_MAX_WORKERS", "").strip()
+        try:
+            primary_retrieval_max_workers = int(raw_primary_retrieval_max_workers) if raw_primary_retrieval_max_workers else None
+        except ValueError:
+            primary_retrieval_max_workers = None
 
         service = cls(
             fs_client=fs_client,
@@ -656,6 +758,7 @@ class RecommendationService:
             consumed_image_use_detail_lookup=consumed_image_use_detail_lookup,
             parallel_slot_execution_enabled=parallel_slot_execution_enabled,
             parallel_primary_role_retrieval_enabled=parallel_primary_role_retrieval_enabled,
+            primary_retrieval_max_workers=primary_retrieval_max_workers,
         )
         service.warm_parallel_search_runtime()
         return service
@@ -3956,6 +4059,7 @@ class RecommendationService:
         primary_search_budgets: dict[str, int],
         is_australian_user: bool,
         use_dedicated_search_connection: bool = False,
+        primary_search_trace_origin: float | None = None,
     ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]], dict[str, bool]]:
         # Allow both slot-level and role-level parallelism simultaneously.
         # When slots run in parallel each slot already has its own dedicated connection;
@@ -3969,7 +4073,42 @@ class RecommendationService:
             and normalize_text(meal_type) == "lunch"
         )
 
+        def _log_primary_search_timeline(
+            role_hint: str,
+            top_k: int,
+            prefetch: int,
+            *,
+            event: str,
+            started_at: float | None = None,
+            result_count: int | None = None,
+        ) -> None:
+            if primary_search_trace_origin is None:
+                return
+            now = time.perf_counter()
+            log_parts = [
+                "**** Primary Search Timeline:",
+                f"event={event}",
+                f"meal_type={meal_type}",
+                f"role={role_hint}",
+                f"top_k={top_k}",
+                f"prefetch={prefetch}",
+                f"thread={current_thread().name}",
+                f"request_ms={round((now - primary_search_trace_origin) * 1000.0, 1)}",
+            ]
+            if started_at is not None:
+                log_parts.append(f"elapsed_ms={round((now - started_at) * 1000.0, 1)}")
+            if result_count is not None:
+                log_parts.append(f"result_count={result_count}")
+            print(*log_parts)
+
         def _search_main_candidates() -> list[dict[str, Any]]:
+            started_at = time.perf_counter()
+            _log_primary_search_timeline(
+                "main",
+                primary_search_budgets["main_top_k"],
+                primary_search_budgets["main_prefetch"],
+                event="start",
+            )
             candidates = self.local_dataset.search(
                 meal_type=meal_type,
                 query_vector=main_query_vec,
@@ -3979,9 +4118,25 @@ class RecommendationService:
                 role_hint="main",
                 dedicated_connection=search_with_dedicated_connection,
             )
-            return self._filter_main_candidates_for_meal(meal_type, candidates)
+            filtered_candidates = self._filter_main_candidates_for_meal(meal_type, candidates)
+            _log_primary_search_timeline(
+                "main",
+                primary_search_budgets["main_top_k"],
+                primary_search_budgets["main_prefetch"],
+                event="finish",
+                started_at=started_at,
+                result_count=len(filtered_candidates),
+            )
+            return filtered_candidates
 
         def _search_side_candidates() -> list[dict[str, Any]]:
+            started_at = time.perf_counter()
+            _log_primary_search_timeline(
+                "side",
+                primary_search_budgets["side_top_k"],
+                primary_search_budgets["side_prefetch"],
+                event="start",
+            )
             candidates = self.local_dataset.search(
                 meal_type=meal_type,
                 query_vector=side_query_vec,
@@ -3992,10 +4147,26 @@ class RecommendationService:
                 role_hint="side",
                 dedicated_connection=search_with_dedicated_connection,
             )
-            return self._filter_side_candidates_for_meal(meal_type, candidates)
+            filtered_candidates = self._filter_side_candidates_for_meal(meal_type, candidates)
+            _log_primary_search_timeline(
+                "side",
+                primary_search_budgets["side_top_k"],
+                primary_search_budgets["side_prefetch"],
+                event="finish",
+                started_at=started_at,
+                result_count=len(filtered_candidates),
+            )
+            return filtered_candidates
 
         def _search_drink_candidates() -> list[dict[str, Any]]:
-            return self.local_dataset.search(
+            started_at = time.perf_counter()
+            _log_primary_search_timeline(
+                "drink",
+                primary_search_budgets["drink_top_k"],
+                primary_search_budgets["drink_prefetch"],
+                event="start",
+            )
+            candidates = self.local_dataset.search(
                 meal_type=meal_type,
                 query_vector=drink_query_vec,
                 top_k=primary_search_budgets["drink_top_k"],
@@ -4005,6 +4176,15 @@ class RecommendationService:
                 role_hint="drink",
                 dedicated_connection=search_with_dedicated_connection,
             )
+            _log_primary_search_timeline(
+                "drink",
+                primary_search_budgets["drink_top_k"],
+                primary_search_budgets["drink_prefetch"],
+                event="finish",
+                started_at=started_at,
+                result_count=len(candidates),
+            )
+            return candidates
 
         if run_parallel_retrieval and stagger_dedicated_drink_search:
             # The all-slot cold path already fans out three slots at once. Stagger the
@@ -6237,6 +6417,7 @@ class RecommendationService:
         experiment_config: dict[str, Any],
         feedback_context: dict[str, Any] | None = None,
         use_dedicated_search_connection: bool = False,
+        primary_search_trace_origin: float | None = None,
     ) -> dict[str, Any]:
         slot_started_at = time.perf_counter()
         slot_target = int(round(max(0.0, daily_calories) * slot_weights.get(meal_type, DEFAULT_MEAL_ALLOCATION[meal_type])))
@@ -6283,6 +6464,7 @@ class RecommendationService:
             primary_search_budgets=primary_search_budgets,
             is_australian_user=is_australian_user,
             use_dedicated_search_connection=use_dedicated_search_connection,
+            primary_search_trace_origin=primary_search_trace_origin,
         )
 
         side_expansion_info = {
@@ -7696,6 +7878,20 @@ class RecommendationService:
                 and meal_type_req == "all"
                 and len(selected_meals) > 1
             )
+            # NOTE: Share one origin across slot builds so live probes can compare cross-slot search ordering.
+            primary_search_trace_origin = (
+                time.perf_counter()
+                if _parse_env_bool(os.getenv("PRIMARY_SEARCH_TIMELINE_LOG_ENABLED", "0"), False)
+                else None
+            )
+            if primary_search_trace_origin is not None:
+                print(
+                    "**** Primary Search Timeline:",
+                    "event=request_start",
+                    f"meal_type_req={meal_type_req}",
+                    f"slots={len(selected_meals)}",
+                    f"primary_workers={self._primary_retrieval_max_workers}",
+                )
 
             def _build_slot(meal_type: str) -> dict[str, Any]:
                 slot_lookup_plan = slot_lookup_plans.get(meal_type) or {}
@@ -7718,12 +7914,14 @@ class RecommendationService:
                     experiment_config=experiment_config,
                     feedback_context=feedback_context,
                     use_dedicated_search_connection=run_slots_in_parallel,
+                    primary_search_trace_origin=primary_search_trace_origin,
                 )
 
             print(
                 f"**** Recommendation Slot Execution: mode={'parallel' if run_slots_in_parallel else 'sequential'} "
                 f"slots={len(selected_meals)} "
-                f"inner_parallel_roles={int(self.parallel_primary_role_retrieval_enabled)}"
+                f"inner_parallel_roles={int(self.parallel_primary_role_retrieval_enabled)} "
+                f"primary_workers={self._primary_retrieval_max_workers}"
             )
 
             if run_slots_in_parallel:

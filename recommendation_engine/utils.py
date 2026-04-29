@@ -164,6 +164,11 @@ _TITLE_PHRASE_ALIAS_MAP = {
     "rice beverage": "Rice Milk",
     "soy beverage": "Soy Milk",
 }
+_CANDIDATE_ONLY_TITLE_ALIAS_MAP = {
+    # Keep the Phase 11 dev-only exact-title bridges off the benchmark-side canonical title surface.
+    "hermesetas original 300 tablets": "Intense sweetener, containing saccharin and sucralose, tablet",
+    "milk": "Milk, cow, fluid, rich or creamy",
+}
 _TITLE_TOKEN_REPLACEMENTS = {
     "bidifus": "bifidus",
     "fetta": "feta",
@@ -485,7 +490,7 @@ def is_ingredient_like_title(value: Any) -> bool:
     return len(title_tokens) <= 5 or bool(strong_ingredient_hits)
 
 
-def canonicalize_title(value: Any) -> str:
+def canonicalize_title(value: Any, include_candidate_only_aliases: bool = False) -> str:
     original = clean_title_text(value)
     if not original:
         return ""
@@ -496,6 +501,8 @@ def canonicalize_title(value: Any) -> str:
     stripped = re.sub(r"\s+", " ", stripped).strip(" ,:-")
     normalized = normalize_text(stripped)
     alias = _TITLE_ALIAS_MAP.get(normalized)
+    if not alias and include_candidate_only_aliases:
+        alias = _CANDIDATE_ONLY_TITLE_ALIAS_MAP.get(normalized)
     if alias:
         return alias
     phrase_alias = _phrase_alias_for_title(normalized)
@@ -523,8 +530,8 @@ def build_display_title(primary_title: Any, mapped_title: Any = None) -> str:
     return primary_clean or mapped_clean or clean_title_text(primary_title) or clean_title_text(mapped_title)
 
 
-def canonical_title_key(value: Any) -> str:
-    return normalize_text(canonicalize_title(value))
+def canonical_title_key(value: Any, include_candidate_only_aliases: bool = False) -> str:
+    return normalize_text(canonicalize_title(value, include_candidate_only_aliases=include_candidate_only_aliases))
 
 
 def tokenize(value: Any) -> set[str]:

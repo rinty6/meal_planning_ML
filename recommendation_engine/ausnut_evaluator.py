@@ -190,7 +190,7 @@ def evaluate_candidate_match(
         benchmark_major_food_group=str(record.get("major_food_group") or ""),
     )
     title_token_overlap = _title_token_overlap(
-        str(candidate.get("title") or candidate.get("canonical_title") or ""),
+        str(candidate.get("canonical_title") or candidate.get("title") or ""),
         str(record.get("canonical_title") or record.get("title") or ""),
     )
     category_or_group_match = bool(
@@ -905,7 +905,7 @@ def generate_alias_candidate_report(
         top_candidates = result.get("top_candidates") or []
         top_candidate = top_candidates[0] if top_candidates else {}
         source_title = str(top_candidate.get("title") or "").strip()
-        source_key = canonical_title_key(source_title)
+        source_key = canonical_title_key(source_title, include_candidate_only_aliases=True)
         target_title = canonicalize_title(result.get("canonical_title") or result.get("title") or "")
         target_key = canonical_title_key(target_title)
         if not source_key or not target_key or source_key == target_key:

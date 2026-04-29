@@ -42,6 +42,18 @@ def prime_status():
         return jsonify({"error": str(exc)}), 500
 
 
+@app.route("/api/runtime-metrics", methods=["POST"])
+def runtime_metrics():
+    # NOTE: Expose queue and process telemetry for Phase 10 runtime measurement only.
+    try:
+        payload = recommendation_service.get_runtime_metrics()
+        print("**** API /runtime-metrics completed")
+        return jsonify(payload)
+    except Exception as exc:
+        print("Runtime Metrics Error:", exc)
+        return jsonify({"error": str(exc)}), 500
+
+
 @app.route("/api/recommendation", methods=["POST"])
 @app.route("/recommend", methods=["POST"])
 def recommend():

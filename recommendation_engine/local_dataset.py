@@ -1731,7 +1731,8 @@ class LocalFoodDataset:
                 "recipe_id": recipe_id,
                 "title": title,
                 "original_title": title,
-                "canonical_title": canonicalize_title(title),
+                # Apply the reviewed Phase 11 exact-title aliases on candidate records only.
+                "canonical_title": canonicalize_title(title, include_candidate_only_aliases=True),
                 "dataset_title": title,
                 "image": str(row.get("image") or "").strip() or None,
                 "meal_type": slot if slot in MEAL_SLOTS else "lunch",
