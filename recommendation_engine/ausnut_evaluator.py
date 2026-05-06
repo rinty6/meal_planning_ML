@@ -256,11 +256,14 @@ def _current_off_only_score(candidate: dict[str, Any], match: dict[str, Any]) ->
     macro_similarity = 1.0 - min(1.0, to_float((match.get("macro_vector_distance") or {}).get("normalized_l2_distance"), 0.0))
     category_agreement = match.get("category_agreement") or {}
     health_score = min(5.0, max(0.0, to_float(candidate.get("health_score") or candidate.get("aggregated_rating"), 0.0))) / 5.0
+    # Keep ranking aligned with the acceptance gate when major food group agrees.
+    major_food_group_match = to_float(category_agreement.get("major_food_group_match"), 0.0)
     score = (
         0.45 * nutrient_similarity
         + 0.25 * macro_similarity
         + 0.15 * to_float(match.get("title_token_overlap"), 0.0)
         + 0.10 * to_float(category_agreement.get("recipe_category_match"), 0.0)
+        + 0.01 * major_food_group_match
         + 0.05 * to_float(category_agreement.get("meal_slot_match"), 0.0)
         + (0.05 if bool(candidate.get("is_australian")) else 0.0)
         + (0.03 * health_score)
