@@ -56,8 +56,8 @@ def _strip_brand_prefix(query: str) -> str:
 
 
 class FatSecretClient:
-    OAUTH_URL = "https://oauth.fatsecret.com/connect/token"
-    API_URL = "https://platform.fatsecret.com/rest/server.api"
+    OAUTH_URL = "https://goodhealthmate-fs.fly.dev/connect/token"
+    API_URL = "https://goodhealthmate-fs.fly.dev/rest/server.api"
 
     def __init__(
         self,
